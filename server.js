@@ -8,7 +8,7 @@ const port = 3000;
 const corsOptions = {
   origin: "http://localhost:4200",
   optionsSuccessStatus: 204,
-  methods: "GET, POST"
+  methods: "GET, POST",
 };
 
 app.use(cors(corsOptions));
@@ -42,7 +42,7 @@ app.get("/clothes", (req, res) => {
 
 // POST route to create a new clothing item
 app.post("/clothes", (req, res) => {
-  const newItem = req.body;
+  const { image, name, price, rating } = req.body;
 
   fs.readFile("db.json", "utf8", (err, data) => {
     if (err) {
@@ -52,6 +52,18 @@ app.post("/clothes", (req, res) => {
     }
 
     const jsonData = JSON.parse(data);
+
+    const maxId = jsonData.items.reduce(
+      (max, item) => Math.max(max, item.id),
+      0
+    );
+    const newItem = {
+      id: maxId + 1,
+      image,
+      name,
+      price,
+      rating,
+    };
     jsonData.items.push(newItem);
 
     fs.writeFile("db.json", JSON.stringify(jsonData, null, 2), (err) => {
@@ -68,7 +80,7 @@ app.post("/clothes", (req, res) => {
 // PUT route to update a clothing item by ID
 app.put("/clothes/:id", (req, res) => {
   const itemId = parseInt(req.params.id);
-  const updatedItem = req.body;
+  const { image, name, price, rating } = req.body;
 
   fs.readFile("db.json", "utf8", (err, data) => {
     if (err) {
@@ -78,15 +90,21 @@ app.put("/clothes/:id", (req, res) => {
     }
 
     const jsonData = JSON.parse(data);
-    const itemIndex = jsonData.items.findIndex(item => item.id === itemId);
+    const itemIndex = jsonData.items.findIndex((item) => item.id === itemId);
 
     if (itemIndex === -1) {
       return res.status(404).send("Item not found");
     }
 
-    jsonData.items[itemIndex] = { ...jsonData.items[itemIndex], ...updatedItem };
+    jsonData.items[itemIndex] = {
+      itemId,
+      image,
+      name,
+      price,
+      rating,
+    };
 
-    fs.writeFile("db.json", JSON.stringify(jsonData, null, 2), (err) => {
+    fs.writeFile("db.json", JSON.stringify(jsonData), (err) => {
       if (err) {
         console.log(err);
         res.status(500).send("Internal Server Error");
@@ -109,7 +127,7 @@ app.delete("/clothes/:id", (req, res) => {
     }
 
     const jsonData = JSON.parse(data);
-    const itemIndex = jsonData.items.findIndex(item => item.id === itemId);
+    const itemIndex = jsonData.items.findIndex((item) => item.id === itemId);
 
     if (itemIndex === -1) {
       return res.status(404).send("Item not found");
@@ -117,7 +135,7 @@ app.delete("/clothes/:id", (req, res) => {
 
     jsonData.items.splice(itemIndex, 1);
 
-    fs.writeFile("db.json", JSON.stringify(jsonData, null, 2), (err) => {
+    fs.writeFile("db.json", JSON.stringify(jsonData), (err) => {
       if (err) {
         console.log(err);
         res.status(500).send("Internal Server Error");
