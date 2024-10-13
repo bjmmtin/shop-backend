@@ -40,6 +40,94 @@ app.get("/clothes", (req, res) => {
   });
 });
 
+// POST route to create a new clothing item
+app.post("/clothes", (req, res) => {
+  const newItem = req.body;
+
+  fs.readFile("db.json", "utf8", (err, data) => {
+    if (err) {
+      console.log(err);
+      res.status(500).send("Internal Server Error");
+      return;
+    }
+
+    const jsonData = JSON.parse(data);
+    jsonData.items.push(newItem);
+
+    fs.writeFile("db.json", JSON.stringify(jsonData, null, 2), (err) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send("Internal Server Error");
+        return;
+      }
+      res.status(201).json(newItem);
+    });
+  });
+});
+
+// PUT route to update a clothing item by ID
+app.put("/clothes/:id", (req, res) => {
+  const itemId = parseInt(req.params.id);
+  const updatedItem = req.body;
+
+  fs.readFile("db.json", "utf8", (err, data) => {
+    if (err) {
+      console.log(err);
+      res.status(500).send("Internal Server Error");
+      return;
+    }
+
+    const jsonData = JSON.parse(data);
+    const itemIndex = jsonData.items.findIndex(item => item.id === itemId);
+
+    if (itemIndex === -1) {
+      return res.status(404).send("Item not found");
+    }
+
+    jsonData.items[itemIndex] = { ...jsonData.items[itemIndex], ...updatedItem };
+
+    fs.writeFile("db.json", JSON.stringify(jsonData, null, 2), (err) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send("Internal Server Error");
+        return;
+      }
+      res.status(200).json(jsonData.items[itemIndex]);
+    });
+  });
+});
+
+// DELETE route to remove a clothing item by ID
+app.delete("/clothes/:id", (req, res) => {
+  const itemId = parseInt(req.params.id);
+
+  fs.readFile("db.json", "utf8", (err, data) => {
+    if (err) {
+      console.log(err);
+      res.status(500).send("Internal Server Error");
+      return;
+    }
+
+    const jsonData = JSON.parse(data);
+    const itemIndex = jsonData.items.findIndex(item => item.id === itemId);
+
+    if (itemIndex === -1) {
+      return res.status(404).send("Item not found");
+    }
+
+    jsonData.items.splice(itemIndex, 1);
+
+    fs.writeFile("db.json", JSON.stringify(jsonData, null, 2), (err) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send("Internal Server Error");
+        return;
+      }
+      res.status(204).send(); // No content
+    });
+  });
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
