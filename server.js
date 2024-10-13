@@ -12,6 +12,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use(express.json());
 
 // Route to get clothing items with pagination
 app.get("/clothes", (req, res) => {
